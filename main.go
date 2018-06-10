@@ -81,6 +81,10 @@ func main() {
 	for scanner.Scan() {
 		thing := scanner.Text()
 
+		if thing == "" {
+			continue
+		}
+
 		callArgs := append([]string{}, binArgs...)
 		for i, callArg := range callArgs {
 			callArgs[i] = mustExecTemplate(callArg, varName, thing, index)
@@ -98,6 +102,14 @@ func main() {
 		}
 		index++
 	}
+
+	// check for errors
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("failed to scan the source reader, err=%v", err)
+	}
+
+	// exit properly
+	os.Exit(0)
 }
 
 func mustExecTemplate(tpl, varName, value string, index int) string {
