@@ -29,17 +29,21 @@ $ echo -e "many wonders\nint this\nworld!" | foreach - as line '\n' echo "{{.ind
 1: int this
 2: world!
 
-$ echo "this is a thing" | go run main.go  - as word '\s+' echo -n "{{.word |upper}} "
+$ echo "this is a thing" | foreach  - as word '\s+' echo -n "{{.word |upper}} "
 THIS IS A THING
 
-$ echo "this is a thing" | go run main.go -kind text  - as word '\s+' echo -n "{{.wordf}}-"
+$ echo "this is a thing" | foreach -kind text  - as word '\s+' echo -n "{{.wordf}}-"
 <no value>-<no value>-<no value>-<no value>-
 
-$ echo "this is a thing" | go run main.go -kind html - as word '\s+' echo -n "{{.wordf}}-"
+$ echo "this is a thing" | foreach -kind html - as word '\s+' echo -n "{{.wordf}}-"
 ----
 
-$ echo "this is a thing" | go run main.go - as word '\s+' echo -n "{{.wordf}}-"
+$ echo "this is a thing" | foreach - as word '\s+' echo -n "{{.wordf}}-"
 ----
+
+$ ls test/src/ | foreach - as file '\s+' cp -v test/src/{{.file}} test/dst/{{.file}}
+'test/src/1' -> 'test/dst/1'
+'test/src/2' -> 'test/dst/2'
 
 $ echo "this is a thing" | foreach -s - as word '\s+' echo -n "{{.wordf}}-"
 panic: template: :1:2: executing "" at <.wordf>: map has no entry for key "wordf"
@@ -52,7 +56,7 @@ main.mustExecTemplate(0x7ffca90e821d, 0xb, 0x7ffca90e820c, 0x4, 0xc4200c80e0, 0x
 main.main()
 	/home/mh-cbon/gow/src/github.com/mh-cbon/foreach/main.go:92 +0x524
 
-  $ echo "this is a thing" | go run main.go  - as word '\s+' echo -n "{{.word |upper}-"
+  $ echo "this is a thing" | foreach  - as word '\s+' echo -n "{{.word |upper}-"
   panic: template: :1: unexpected "}" in operand
 
   goroutine 1 [running]:
