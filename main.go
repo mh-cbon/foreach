@@ -5,22 +5,32 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"html/template"
+	html "html/template"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+	text "text/template"
+
+	"github.com/Masterminds/sprig"
+	"github.com/leekchan/gtf"
 )
 
 func main() {
 
 	var opts = struct {
 		insensitive bool
+		strict      bool
+		funcs       string
+		kind        string
 	}{}
 
 	flag.BoolVar(&opts.insensitive, "i", true, "regexp match case insensitive")
+	flag.BoolVar(&opts.strict, "s", false, "enable strict variable naming")
+	flag.StringVar(&opts.funcs, "funcs", "sprig", "the set of functions to import for the template processing, one of sprig|gtf")
+	flag.StringVar(&opts.kind, "kind", "html", "the kind of html processing, one of text|html")
 
 	flag.Parse()
 
@@ -74,6 +84,16 @@ func main() {
 		binArgs = append([]string{}, cmdLine[1:]...)
 	}
 
+	// initialize the func map
+	funcMap := map[string]interface{}{}
+	{
+		if opts.funcs == "sprig" {
+			funcMap = sprig.FuncMap()
+		} else if opts.funcs == "gtf" {
+			funcMap = gtf.GtfFuncMap
+		}
+	}
+
 	//process the input
 	scanner := bufio.NewScanner(src)
 	scanner.Split(ScanRegexp(splitBy))
@@ -87,7 +107,7 @@ func main() {
 
 		callArgs := append([]string{}, binArgs...)
 		for i, callArg := range callArgs {
-			callArgs[i] = mustExecTemplate(callArg, varName, thing, index)
+			callArgs[i] = mustExecTemplate(opts.kind, callArg, varName, thing, index, funcMap, opts.strict)
 		}
 
 		cmd := exec.Command(bin, callArgs...)
@@ -112,20 +132,30 @@ func main() {
 	os.Exit(0)
 }
 
-func mustExecTemplate(tpl, varName, value string, index int) string {
+func mustExecTemplate(kind, tpl, varName, value string, index int, funcMap map[string]interface{}, strict bool) string {
 
-	t := template.Must(
-		template.New("").Parse(tpl),
-	)
 	data := map[string]interface{}{
 		"index": index,
 	}
 	data[varName] = value
 	out := new(bytes.Buffer)
-	t = template.Must(
-		t,
-		t.Execute(out, data),
-	)
+
+	opt := "missingkey=zero"
+	if strict {
+		opt = "missingkey=error"
+	}
+	if kind == "html" {
+		t := html.Must(
+			html.New("").Funcs(funcMap).Option(opt).Parse(tpl),
+		)
+		t = html.Must(t, t.Execute(out, data))
+
+	} else if kind == "text" {
+		t := text.Must(
+			text.New("").Funcs(funcMap).Option(opt).Parse(tpl),
+		)
+		t = text.Must(t, t.Execute(out, data))
+	}
 	return out.String()
 }
 
