@@ -1,6 +1,6 @@
 # foreach
 
-bin util to iterate over a list of seprated things and call for an external command `foreach` thing found.
+bin util to iterate over a list of separated things and call for an external command `foreach` thing found.
 
 # usage
 
