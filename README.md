@@ -6,7 +6,7 @@ bin util to iterate over a list of separated things and call for an external com
 
 ```sh
 echo "this is a thing" | foreach - as word '\s+' echo "{{.word}}"
-echo "many wonders\nint this\nworld!" | foreach - as line '\n' echo "{{.index}}: {{.line}}"
+echo -e "many wonders\nint this\nworld!" | foreach - as line '\n' echo "{{.index}}: {{.line}}"
 ```
 
 # install
@@ -14,7 +14,3 @@ echo "many wonders\nint this\nworld!" | foreach - as line '\n' echo "{{.index}}:
 ```sh
 go get github.com/mh-cbon/foreach
 ```
-
-# todo
-
-- implement
