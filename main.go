@@ -35,12 +35,19 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
+	if len(args) < 1 {
+		log.Fatalf("no command to run")
+	}
 
 	//look for "- as word '\s+'"
 	sdsn := args[0]
 	nameStr := args[2]
 	splitStr := args[3]
+
 	cmdLine := append([]string{}, args[4:]...)
+	if cmdLine[0] == "--" {
+		cmdLine = cmdLine[1:]
+	}
 
 	// open src
 	var src io.Reader
@@ -116,9 +123,16 @@ func main() {
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
 
+		if index > 0 {
+			log.Println()
+			log.Println()
+			log.Println("---------------------------------------------------------")
+		}
+
+		log.Printf("> %v %v\n", bin, strings.Join(callArgs, " "))
+
 		if err := cmd.Run(); err != nil {
-			cmd := strings.Join(cmdLine, " ")
-			log.Fatalf("failed to execute the command %q, err=%v", cmd, err)
+			log.Fatalf("failed to execute the command %v %v, err=%v", bin, strings.Join(callArgs, " "), err)
 		}
 		index++
 	}
@@ -165,7 +179,8 @@ func ScanRegexp(r *regexp.Regexp) func(data []byte, atEOF bool) (advance int, to
 		if atEOF && len(data) == 0 {
 			return 0, nil, nil
 		}
-		if i := r.FindIndex(data); len(i) >= 0 {
+		i := r.FindIndex(data)
+		if len(i) > 0 {
 			index := i[0]
 			l := i[1] - i[0]
 			return index + l, data[0:index], nil
